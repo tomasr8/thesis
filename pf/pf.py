@@ -70,55 +70,51 @@ def likelihood(xk, zk, nk):
 def rmse(xk, xk_prime):
     xk = np.array(xk)
     xk_prime = np.array(xk_prime)
-    return np.sqrt(np.sum(np.square(xk - xk_prime)))
+    return np.sqrt(np.mean(np.square(xk - xk_prime)))
 
 
 np.random.seed(0)
 vk = math.sqrt(10)
 nk = math.sqrt(1)
 
+def run_pf(N, k, vk, nk, fn):
+    particles, weights = get_initial_particles(N)
+    ground_truth = [0]
+    estimates = [0]
+
+    for k in range(1, 75):
+        ground_truth.append(f(ground_truth[-1], k, vk))
+        zk = get_measurement(ground_truth[-1], nk)
+        particles = predict(particles, k, vk)
+        weights = update(particles, weights, zk, nk)
+
+        # print(f"Ground truth: {ground_truth}")
+        # print(f"Estimate: {estimate(particles, weights)}")
+        estimates.append(estimate(particles, weights))
+        # print(f"RMSE: {rmse(ground_truth, estimates)}")
+
+        # idx = np.random.choice(N, 100)
+        # plt.scatter(np.ones(100)*k, particles[idx], c=weights[idx], s=7)
+
+        if neff(weights) < 0.5*N:
+            # print(k, "Resample")
+            particles, weights = resample(particles, weights, fn=fn)
+
+    print(f"RMSE: {rmse(ground_truth, estimates)}")
+    return rmse(ground_truth, estimates)
+
+    # plt.plot(np.arange(len(ground_truth)), ground_truth, c="green")
+    # plt.plot(np.arange(len(ground_truth)), estimates, c="orange")
+
+    # plt.show()
+
+
 N = 1000
-particles, weights = get_initial_particles(N)
-ground_truth = [0]
-estimates = [0]
+k = 75
 
-for k in range(1, 75):
-    ground_truth.append(f(ground_truth[-1], k, vk))
-    zk = get_measurement(ground_truth[-1], nk)
-    particles = predict(particles, k, vk)
-    weights = update(particles, weights, zk, nk)
+mean_rmse = []
+for _ in range(100):
+    r = run_pf(N, k, vk, nk, multinomial_resample)
+    mean_rmse.append(r)
 
-    # print(f"Ground truth: {ground_truth}")
-    # print(f"Estimate: {estimate(particles, weights)}")
-    estimates.append(estimate(particles, weights))
-    # print(f"RMSE: {rmse(ground_truth, estimates)}")
-
-    idx = np.random.choice(N, 100)
-    plt.scatter(np.ones(100)*k, particles[idx], c=weights[idx], s=7)
-
-    if neff(weights) < 0.5*N:
-        print(k, "Resample")
-        particles, weights = resample(particles, weights, fn=stratified_resample)
-
-
-print(f"RMSE: {rmse(ground_truth, estimates)}")
-
-plt.plot(np.arange(len(ground_truth)), ground_truth, c="green")
-plt.plot(np.arange(len(ground_truth)), estimates, c="orange")
-
-plt.show()
-
-
-# for k in range(80):
-#     xs.append(f(xs[-1], k, vk))
-
-
-# plt.plot(np.arange(len(xs)), xs)
-# plt.show()
-
-
-# x = 0
-# zks = [1, 2, 3, 4, 5]
-
-# for zk in zks:
-#     print(likelihood(x, zk, 1))
+print(np.mean(mean_rmse))

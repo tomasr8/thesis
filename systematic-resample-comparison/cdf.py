@@ -1,18 +1,18 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
+import matplotlib.patches as mpatches
 import numpy as np
-
 
 xs = np.array([
     0.1,
-    0.05,
-    0.05,
-    0.25,
-    0.05,
-    0.3,
+    0.07,
     0.15,
-    0.05,
+    0.12,
+    0.06,
+    0.25,
+    0.1,
+    0.15,
 ])
 
 
@@ -26,21 +26,27 @@ fig, ax = plt.subplots(1)
 for i in range(cumsum.shape[0] - 1):
     a = cumsum[i]
     b = cumsum[i+1]
-    ax.plot([i+1, i+1], [a, b], c="black")
+
+    if i != 0:
+        ax.plot([i+1, i+1], [a, b], c="black")
+
 
     if i < cumsum.shape[0] - 2:
         ax.plot([i+1, i+2], [b, b], c="black")
 
 
-    # ax.plot([i, a], [i+1, a])
+for i, x in enumerate(xs):
+    ax.plot([i+1, i+1], [0, x], color="black", alpha=0.5, linewidth=4)
+
+
 
 ax.plot([0, 6], [0.6, 0.6], linestyle="--", c="firebrick")
-ax.plot([6, 6], [0.5, 0], linestyle="--", c="firebrick")
+ax.plot([6, 6], [0.5, xs[5]], linestyle="--", c="firebrick")
 
 ticks = np.arange(8) + 1
 ax.set_xticks(ticks)
 
-labels = [f"$p_{i}$" for i in ticks]
+labels = [f"$x^{i}$" for i in ticks]
 ax.set_xticklabels(labels)
 
 # dic = { 1.0 : "some custom text"}
@@ -62,6 +68,10 @@ ax.set_xlim(0, 9)
 
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
+
+cdf = mpatches.Patch(color="black", label="$P(\\mathbf{x})$")
+weight = mpatches.Patch(color="black", alpha=0.5, label="$w^i$")
+plt.legend(handles=[cdf, weight])
 
 
 fig.tight_layout()
