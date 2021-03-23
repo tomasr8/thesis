@@ -11,7 +11,7 @@ def get_initial_particles(n):
     return np.random.uniform(-2, 2, n), np.ones(n, dtype=np.float64) / n
 
 def get_measurement(x, nk):
-    return (x**2)/20 + np.random.normal(loc=0, scale=nk)
+    return (x**2)/20 + nk
 
 # def predict(particles, k, vk):
 #     return particles + 1/(5+particles) + 1 + \
@@ -21,10 +21,13 @@ def get_measurement(x, nk):
 #     return particles + 1 + \
 #         np.random.normal(loc=0, scale=vk, size=particles.shape[0])
 
+# def predict(particles, k, vk):
+#     return particles/2 + (25*particles)/(1+particles**2) + \
+#         8*np.cos(1.2*k) + \
+#         np.random.normal(loc=0, scale=vk, size=particles.shape[0])
+
 def predict(particles, k, vk):
-    return particles/2 + (25*particles)/(1+particles**2) + \
-        8*np.cos(1.2*k) + \
-        np.random.normal(loc=0, scale=vk, size=particles.shape[0])
+    return particles + np.cos(k) + np.random.normal(loc=0, scale=vk, size=particles.shape[0])
 
 def update(particles, weights, zk, nk):
     weights *= scipy.stats.norm((particles**2)/20, nk).pdf(zk)
@@ -59,9 +62,13 @@ def estimate(particles, weights):
 #     return x + 1 + \
 #         np.random.normal(loc=0, scale=vk)
 
+# def f(x, k, vk):
+#     return x/2 + (25*x)/(1+x**2) + 8*np.cos(1.2*k) + \
+#         np.random.normal(loc=0, scale=vk)
+
+
 def f(x, k, vk):
-    return x/2 + (25*x)/(1+x**2) + 8*np.cos(1.2*k) + \
-        np.random.normal(loc=0, scale=vk)
+    return x + np.cos(k) + vk
 
 
 def likelihood(xk, zk, nk):
@@ -73,7 +80,6 @@ def rmse(xk, xk_prime):
     return np.sqrt(np.mean(np.square(xk - xk_prime)))
 
 
-np.random.seed(0)
 vk = math.sqrt(10)
 nk = math.sqrt(1)
 
@@ -82,9 +88,16 @@ def run_pf(N, k, vk, nk, fn):
     ground_truth = [0]
     estimates = [0]
 
-    for k in range(1, 75):
-        ground_truth.append(f(ground_truth[-1], k, vk))
-        zk = get_measurement(ground_truth[-1], nk)
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    np.random.seed(4)
+    vks = np.random.normal(0, vk, 99)
+    nks = np.random.normal(0, nk, 99)
+
+
+    for k in range(1, 100):
+        ground_truth.append(f(ground_truth[-1], k, vks[k-1]))
+        zk = get_measurement(ground_truth[-1], nks[k-1])
         particles = predict(particles, k, vk)
         weights = update(particles, weights, zk, nk)
 
@@ -93,27 +106,28 @@ def run_pf(N, k, vk, nk, fn):
         estimates.append(estimate(particles, weights))
         # print(f"RMSE: {rmse(ground_truth, estimates)}")
 
-        # idx = np.random.choice(N, 100)
-        # plt.scatter(np.ones(100)*k, particles[idx], c=weights[idx], s=7)
+        idx = np.random.choice(N, 100)
+        plt.scatter(np.ones(100)*k, particles[idx], c=weights[idx], s=7)
 
         if neff(weights) < 0.5*N:
             # print(k, "Resample")
             particles, weights = resample(particles, weights, fn=fn)
 
     print(f"RMSE: {rmse(ground_truth, estimates)}")
+
+    ax.plot(np.arange(len(ground_truth)), ground_truth, c="red")
+    ax.plot(np.arange(len(ground_truth)), estimates, c="fuchsia")
+    ax.legend(["Ground truth", "Filter estimate"])
+    plt.show()
     return rmse(ground_truth, estimates)
-
-    # plt.plot(np.arange(len(ground_truth)), ground_truth, c="green")
-    # plt.plot(np.arange(len(ground_truth)), estimates, c="orange")
-
-    # plt.show()
 
 
 N = 1000
 k = 75
+np.random.seed(0)
 
 mean_rmse = []
-for _ in range(100):
+for _ in range(1):
     r = run_pf(N, k, vk, nk, multinomial_resample)
     mean_rmse.append(r)
 
