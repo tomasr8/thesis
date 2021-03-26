@@ -101,7 +101,7 @@ ax[1].set_position([box.x0, box.y0 + box.height * 0.1,
 
 handles, labels = ax[0].get_legend_handles_labels()
 
-order = [0,1,2]
+order = [2,0,1]
 fig.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc='lower center',
           fancybox=False, shadow=False, ncol=3, columnspacing=1.0)
 
