@@ -5,20 +5,20 @@ import scipy.stats
 import matplotlib
 import matplotlib.pyplot as plt
 
-matplotlib.use("pgf")
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+# matplotlib.use("pgf")
+# matplotlib.rcParams.update({
+#     "pgf.texsystem": "pdflatex",
+#     'font.family': 'serif',
+#     'text.usetex': True,
+#     'pgf.rcfonts': False,
+# })
 
 np.random.seed(0)
 N = 40
 
 u = 1
 
-w = 15
+w = 1
 v = 10
 
 ground = [0]
@@ -30,10 +30,18 @@ var = [w]
 wk = np.random.normal(0, w, N)
 vk = np.random.normal(0, v, N)
 
+real = np.random.normal(0, 15, N)
+
+
 for k in range(1, N+1):
-    ground.append(ground[-1] + u + wk[k-1])
+    # print(0.5*ground[-1] + u + wk[k-1])
+    ground.append(ground[-1] - np.sqrt(np.abs(ground[-1])) + 5*np.sin(k) + u + wk[k-1])
+    # ground.append(ground[-1] + u + real[k-1])
+
     no_filter.append(no_filter[-1] + u)
     z = ground[-1] + vk[k-1]
+    # z = ground[-1] + real2[k-1]
+
     measurements.append(z)
 
     x = est[-1] + u
@@ -45,7 +53,7 @@ for k in range(1, N+1):
     est.append(x)
     var.append(P)
 
-print(var)
+# print(var)
 
 fig, ax = plt.subplots(2)
 fig.set_size_inches(w=5.02, h=4.5)
@@ -72,7 +80,7 @@ ax[0].legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc
 # ax[0].legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc="upper right", fontsize=12)
 
 
-ax[1].plot(np.arange(len(var)), var, label=r"$\hat{\sigma}$")
+ax[1].plot(np.arange(len(var)), var, label=r"$\hat{\sigma}^2$")
 ax[1].legend(loc="upper right", fontsize=12)
 
 box = ax[1].get_position()
@@ -83,6 +91,6 @@ ax[1].set_position([box.x0, box.y0,
 # fig.subplots_adjust(left=0.07, right=0.99)
 
 
-# plt.show()
+plt.show()
 
-plt.savefig('kf_1d.pgf')
+# plt.savefig('divergence.pgf')
